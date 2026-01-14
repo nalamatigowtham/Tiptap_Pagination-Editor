@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenSphere Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    
+    body {
+      background-color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    
+    .ProseMirror {
+      outline: none !important;
+      font-family: 'Lora', serif;
+      font-size: 11pt;
+      line-height: 24px !important; 
+      color: #111827;
+      background-color: white !important;
+    }
+    
+    .ProseMirror p {
+      margin: 0 !important;
+      padding: 0 !important; 
+      min-height: 24px;
+      display: block !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+    
+    .ProseMirror h1 { font-size: 24pt; font-weight: bold; margin-bottom: 8px !important; line-height: 32px !important; }
+    .ProseMirror h2 { font-size: 18pt; font-weight: bold; margin-bottom: 6px !important; line-height: 28px !important; }
+    .ProseMirror h3 { font-size: 14pt; font-weight: bold; margin-bottom: 4px !important; line-height: 24px !important; }
+
+    @media print, .is-pdf-exporting {
+      @page {
+        size: letter;
+        margin: 0 !important;
+      }
+      
+      body { 
+        background: white !important;
+        overflow: visible !important;
+      }
+      
+      .no-print, 
+      .visual-page-gap { 
+        display: none !important; 
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        visibility: hidden !important;
+        position: absolute !important;
+      }
+      
+      .ProseMirror {
+        box-shadow: none !important;
+        width: 816px !important; 
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+      }
+
+      .page-break-widget-root {
+        display: block !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+        overflow: visible !important;
+        background: white !important;
+      }
+
+      .pdf-page-divider {
+        display: block !important;
+        page-break-before: always !important;
+        break-before: page !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        visibility: hidden !important;
+      }
+      
+      .page-fill-buffer, .page-footer-section, .next-page-start, .page-header-first {
+        display: block !important;
+        background: white !important;
+        border: none !important;
+      }
+
+      .page-footer-section {
+        border-top: 1px solid #f1f5f9 !important;
+      }
+      
+      .next-page-start, .page-header-first {
+        border-bottom: 1px solid #f1f5f9 !important;
+      }
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "html2pdf.js": "https://esm.sh/html2pdf.js@0.10.1?bundle",
+    "@tiptap/starter-kit": "https://esm.sh/@tiptap/starter-kit@^3.15.3",
+    "@tiptap/react": "https://esm.sh/@tiptap/react@^3.15.3",
+    "@tiptap/extension-text-align": "https://esm.sh/@tiptap/extension-text-align@^3.15.3",
+    "@tiptap/extension-underline": "https://esm.sh/@tiptap/extension-underline@^3.15.3",
+    "@tiptap/extension-placeholder": "https://esm.sh/@tiptap/extension-placeholder@^3.15.3",
+    "@tiptap/extension-highlight": "https://esm.sh/@tiptap/extension-highlight@^3.15.3",
+    "@tiptap/extension-link": "https://esm.sh/@tiptap/extension-link@^3.15.3",
+    "@tiptap/extension-table": "https://esm.sh/@tiptap/extension-table@^3.15.3",
+    "@tiptap/extension-table-row": "https://esm.sh/@tiptap/extension-table-row@^3.15.3",
+    "@tiptap/extension-table-header": "https://esm.sh/@tiptap/extension-table-header@^3.15.3",
+    "@tiptap/extension-table-cell": "https://esm.sh/@tiptap/extension-table-cell@^3.15.3",
+    "@tiptap/extension-task-list": "https://esm.sh/@tiptap/extension-task-list@^3.15.3",
+    "@tiptap/extension-task-item": "https://esm.sh/@tiptap/extension-task-item@^3.15.3",
+    "@tiptap/extension-typography": "https://esm.sh/@tiptap/extension-typography@^3.15.3",
+    "@tiptap/pm/": "https://esm.sh/@tiptap/pm@^3.15.3/",
+    "@tiptap/core": "https://esm.sh/@tiptap/core@^3.15.3"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

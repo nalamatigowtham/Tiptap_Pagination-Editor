@@ -1,0 +1,5 @@
+{
+  "name": "OpenSphere Tiptap Paginated Editor",
+  "description": "A production-ready Tiptap editor with real-time US Letter pagination, designed for legal document drafting with visual page breaks and print-matching accuracy.",
+  "requestFramePermissions": []
+}
