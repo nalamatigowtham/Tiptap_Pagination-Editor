@@ -6,6 +6,9 @@ import { MARGIN_PX, PRINTABLE_HEIGHT_PX, PAGE_GAP_PX } from '../constants';
 const SAFE_HEIGHT = PRINTABLE_HEIGHT_PX;
 const LINE_HEIGHT = 24;
 
+// Add a small cushion to avoid fractional rounding clipping the last line
+const MIN_SAFE_CUSHION = 4;
+
 export const Pagination = Extension.create({
   name: 'pagination',
 
@@ -42,13 +45,14 @@ export const Pagination = Extension.create({
             const createBreakWidget = (pIndex: number, currentContentH: number) => {
               const container = document.createElement('div');
               container.className = 'page-break-widget-root';
-              container.style.cssText = 'width: 100%; background: transparent; pointer-events: none; display: block; margin: 0; padding: 0; line-height: 0;';
+              container.style.cssText = 'width: 100%; background: transparent; pointer-events: none; display: block; margin: 0; padding: 0; line-height: 0; box-sizing: border-box;';
               
-              const fill = Math.max(0, 864 - currentContentH);
+              // Reserve at least a small cushion to avoid fractional cuts of the last line
+              const fill = Math.max(MIN_SAFE_CUSHION, PRINTABLE_HEIGHT_PX - currentContentH);
               
               container.innerHTML = `
                 <div class="current-page-end" style="display: block; width: 100%; background: white; margin: 0; padding: 0;">
-                  <!-- Fill content area to exactly 864px -->
+                  <!-- Fill content area to exactly printable px -->
                   <div class="page-fill-buffer" style="height: ${fill}px; width: 100%; background: white;"></div>
                   
                   <!-- Bottom Margin (Footer) -->
@@ -67,7 +71,7 @@ export const Pagination = Extension.create({
                 <div class="pdf-page-divider" style="height: 0; width: 100%; visibility: hidden; pointer-events: none; margin: 0; padding: 0; clear: both;"></div>
 
                 <!-- Top Margin of Next Page -->
-                <div class="next-page-start" style="display: block; width: 100%; background: white; height: ${MARGIN_PX}px; border-bottom: 1px solid #f1f5f9; box-sizing: border-box; margin: 0; padding: 0;"></div>
+                <div class="next-page-start" style="display: block; width: 100%; background: white; height: ${MARGIN_PX}px; box-sizing: border-box; margin: 0; padding: 0;"></div>
               `;
 
               return container;
@@ -89,7 +93,10 @@ export const Pagination = Extension.create({
                 if (currentPageContentHeight === 0 || nodeHeight > SAFE_HEIGHT) {
                    if (node.type.name === 'paragraph' && !splitCandidate) {
                       const remainingSpace = SAFE_HEIGHT - currentPageContentHeight;
-                      const linesAllowed = Math.floor(remainingSpace / LINE_HEIGHT);
+                      // When computing lines allowed for splitting avoid using the very edge,
+                      // so we subtract a small safety margin before flooring to linesAllowed.
+                      const safeRemaining = Math.max(0, remainingSpace - MIN_SAFE_CUSHION);
+                      const linesAllowed = Math.floor(safeRemaining / LINE_HEIGHT);
                       const targetY = (linesAllowed > 0 ? linesAllowed : 1) * LINE_HEIGHT;
                       splitCandidate = { pos: offset, node, relativeTargetY: targetY - 2 };
                    }
@@ -103,11 +110,11 @@ export const Pagination = Extension.create({
               currentPageContentHeight += nodeHeight;
             });
 
-            // Final Page Footer
-            const finalFill = Math.max(0, 864 - currentPageContentHeight);
+            // Final Page Footer - ensure a minimum cushion here too
+            const finalFill = Math.max(MIN_SAFE_CUSHION, PRINTABLE_HEIGHT_PX - currentPageContentHeight);
             const finalFooter = document.createElement('div');
             finalFooter.className = 'page-footer-final-wrap';
-            finalFooter.style.cssText = 'width: 100%; background: white; pointer-events: none; display: block; margin: 0; padding: 0;';
+            finalFooter.style.cssText = 'width: 100%; background: white; pointer-events: none; display: block; margin: 0; padding: 0; box-sizing: border-box;';
             finalFooter.innerHTML = `
               <div class="page-fill-buffer" style="height: ${finalFill}px; width: 100%; background: white;"></div>
               <div class="page-footer-section" style="height: ${MARGIN_PX}px; width: 100%; background: white; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
