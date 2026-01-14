@@ -56,27 +56,35 @@ const App: React.FC = () => {
     },
   });
 
-  const getPdfOptions = () => ({
+  // Updated: accept element to compute its height and set better html2canvas/pagebreak options
+  const getPdfOptions = (element?: HTMLElement) => ({
     margin: 0,
     filename: 'uscis-document.pdf',
     image: { type: 'jpeg' as const, quality: 1.0 },
-    html2canvas: { 
-      scale: 2, 
-      useCORS: true, 
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
       letterRendering: true,
       logging: false,
-      scrollY: 0,
-      windowWidth: 816, // Lock to exact US Letter pixel width
+      // Use -window.scrollY so html2canvas captures the element's position correctly
+      scrollY: -window.scrollY,
+      // Lock to the expected US Letter width (px) and set windowHeight to element height so
+      // html2canvas renders the full element (avoids vertical cropping/tiling rounding issues)
+      windowWidth: 816,
+      windowHeight: element ? Math.ceil(element.scrollHeight) : undefined,
     },
-    jsPDF: { 
-      unit: 'px' as const, 
-      format: [816, 1056] as [number, number], 
+    jsPDF: {
+      unit: 'px' as const,
+      format: [816, 1056] as [number, number],
       orientation: 'portrait' as const,
-      hotfixes: ["px_scaling"]
+      hotfixes: ['px_scaling'],
     },
-    pagebreak: { 
-      mode: ['css'] as ('css' | 'legacy' | 'avoid-all' | 'specify')[],
-    }
+    // Make html2pdf respect both css and the explicit page divider selector so page splitting
+    // follows the plugin's injected .pdf-page-divider widgets.
+    pagebreak: {
+      mode: ['css', 'legacy'],
+      before: '.pdf-page-divider',
+    },
   });
 
   const handlePrint = async () => {
@@ -93,7 +101,8 @@ const App: React.FC = () => {
     document.body.classList.add('is-pdf-exporting');
 
     try {
-      const worker = html2pdf().set(getPdfOptions()).from(element).toPdf();
+      // Pass element into getPdfOptions so html2canvas can be sized to the element height
+      const worker = html2pdf().set(getPdfOptions(element)).from(element).toPdf();
       const pdf = await worker.get('pdf');
       const blobUrl = pdf.output('bloburl');
       
@@ -126,7 +135,8 @@ const App: React.FC = () => {
     document.body.classList.add('is-pdf-exporting');
 
     try {
-      await html2pdf().set(getPdfOptions()).from(element).save();
+      // Pass element here as well
+      await html2pdf().set(getPdfOptions(element)).from(element).save();
     } catch (err) {
       console.error('PDF export failed:', err);
     } finally {
@@ -142,25 +152,17 @@ const App: React.FC = () => {
       {isExporting && (
         <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="font-bold text-gray-900">{loadingText}</p>
+            <div className="font-semibold">{loadingText}</div>
           </div>
         </div>
       )}
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        
-        <main className="flex-1 relative flex flex-col overflow-y-auto bg-gray-200/50 no-scrollbar">
-          <div className="sticky top-0 z-30 flex justify-center p-4 no-print bg-gray-200/50 backdrop-blur-md">
-            <Toolbar editor={editor} />
-          </div>
-          
-          <Editor editor={editor} />
-        </main>
+        <Editor editor={editor} />
+        <Toolbar editor={editor} />
       </div>
     </div>
   );
 };
-
 export default App;
